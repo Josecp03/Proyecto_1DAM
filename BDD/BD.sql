@@ -457,6 +457,152 @@ BEGIN
 END;
 /
 
+-- TRIGGER PARA ESTABLECER UN MÍNIMO DE OYENTES EN LOS ARTISTAS
+CREATE OR REPLACE TRIGGER OYENTES_MINIMOS BEFORE UPDATE ON ARTISTAS FOR EACH ROW
+DECLARE
+BEGIN
+    if updating('oyentes') then
+        if (:new.oyentes < 0) then
+            :new.oyentes := :old.oyentes;
+            raise_application_error(-20001, 'El valor de la columna no puede ser negativo.');
+        end if;
+    end if;
+END;
+/
+
+-- TRIGGER PARA ESTABLECER MÍNIMOS EN LA TABLA CANCIONES
+CREATE OR REPLACE TRIGGER MINIMOS_CANCIONES BEFORE UPDATE ON CANCIONES FOR EACH ROW
+DECLARE
+BEGIN
+    if updating('reproducciones') then -- En caso actualizar las reproducciones
+        if (:new.reproducciones < 0) then
+            :new.reproducciones := :old.reproducciones;
+            raise_application_error(-20001, 'El valor de la columna no puede ser negativo.');
+        end if;
+    end if;
+    
+    if updating('duracion') then -- En caso actualizar la duración
+        if (:new.duracion < 0) then
+            :new.duracion := :old.duracion;
+            raise_application_error(-20001, 'El valor de la columna no puede ser negativo.');
+        end if;
+    end if;
+END;
+/
+
+-- TRIGGER PARA ESTABLECER UN MÍNIMO DE DURACIÓN EN LOS CONCIERTOS
+CREATE OR REPLACE TRIGGER DURACION_MINIMA_CONCIERTO BEFORE UPDATE ON CONCIERTOS FOR EACH ROW
+DECLARE
+BEGIN
+    if updating('duracion') then
+        if (:new.duracion < 0) then
+            :new.duracion := :old.duracion;
+            raise_application_error(-20001, 'El valor de la columna no puede ser negativo.');
+        end if;
+    end if;
+END;
+/
+
+-- PROCEDIMIENTO PARA REALIZAR UN LISTADO DE LOS ARTISTAS QUE TIENE UN REPRESENTANTE Y LAS CANCIONES DE ESTOS
+CREATE OR REPLACE PROCEDURE MOSTRAR_CANCIONES_DISCOS (p_identificador_representante artistas.identificadorrepresentante%type)
+IS
+    v_nombre_representante personas.nombre%type; -- Variable para el nombre del representante
+    
+    -- Variables para los contadores de artistas y canciones
+    v_contador_artistas number(8) := 0;
+    v_contador_canciones number(8) := 0;
+
+    -- Cursor para guardar la información de los artistas
+    cursor cursor_artistas is
+        select *
+        from artistas
+        where identificadorrepresentante = p_identificador_representante;
+    
+    -- Cursor para guardar la información de las canciones
+    cursor cursor_canciones(p_identificador_artista artistas.identificador%type) is
+        select * 
+        from canciones
+        where identificador in (
+            select identificadorcancion
+            from artistas_cantan_canciones
+            where identificadorartista = p_identificador_artista
+        );
+        
+    -- Definición del tipo de registro personalizado
+    type persona_artista_record is record (
+        identificador personas.identificador%type,
+        nombre personas.nombre%type,
+        apellidos personas.apellidos%type,
+        fechanacimiento personas.fechanacimiento%type,
+        fechainicio personas.fechainicio%type,
+        nombreArtistico artistas.nombreartistico%type,
+        pais artistas.pais%type,
+        ciudad artistas.ciudad%type,
+        oyentes artistas.oyentes%type,
+        estado artistas.estado%type
+    );
+    
+    -- Variables para guardar la información de un artista y de una canción
+    v_artista persona_artista_record;
+    v_cancion canciones%rowtype;
+    
+BEGIN
+    
+    -- Consulta para seleccionar el nombre de la academia según su código
+    select nombre into v_nombre_representante
+    from personas
+    where identificador = p_identificador_representante;
+    
+    dbms_output.put_line('NOMBRE DEL REPRESENTANTE: ' || v_nombre_representante);
+    
+    -- Primer cursor
+    open cursor_artistas;
+        loop
+            fetch cursor_artistas into v_artista;
+            exit when cursor_artistas%notfound;
+            -- Si encuentra un artista, sumarlo al contador de artistas
+            if cursor_artistas%found then
+                v_contador_artistas := v_contador_artistas + 1;
+            end if;
+            dbms_output.put_line('----------------------------------------------------------------------------------------------------');
+            dbms_output.put_line('PROFESOR: ' || v_profesor.nom_profesor || ' ' || v_profesor.ape_profesor);
+            dbms_output.put_line('----------------------------------------------------------------------------------------------------');
+            dbms_output.put_line('      NOMBRE ALUMNO           APELLIDOS ALUMNO            FECHA NACIMIENTO');
+            -- Segundo Cursor
+            open cursor_canciones (v_artista.identificador);
+                loop
+                    fetch cursor_canciones into v_cancion;
+                    exit when cursor_canciones%notfound;
+                    -- Si encuentra un opositor, sumarlo al contador de alumnos
+                    if cursor_canciones%found then
+                        v_contador_canciones := v_contador_canciones + 1;
+                 end if;
+                    dbms_output.put_line('      ' || 
+                                         RPAD(v_artista.nombre, 24, ' ') ||
+                                         RPAD(v_artista.apellidos, 30, ' ') ||
+                                         v_artista.oyentes
+                                        );
+
+                end loop;
+            close cursor_opositores;
+        end loop;
+    close cursor_profesores;
+    
+    dbms_output.put_line('----------------------------------------------------------------------------------------------------');
+    dbms_output.put_line('NÚMERO TOTAL DE ARTISTAS: ' || v_contador_artistas || '                       ' || 'NÚMERO TOTAL DE CANCIONES: ' || v_contador_canciones);
+    dbms_output.put_line('----------------------------------------------------------------------------------------------------');
+
+-- Manejo de excepciones
+EXCEPTION
+    when no_data_found then
+        dbms_output.put_line('No se ha encontró el artista en la base de datos');
+    when others then
+        dbms_output.put_line('Error indeteminado en la Base de Datos');
+END;
+/
+
+
+
 
 
 
