@@ -414,7 +414,7 @@ BEGIN
 END;
 /
 
--- AUDITA CANCIONES
+-- AUDITA PERSONAS
 CREATE TABLE AUDITA_CANCIONES (
     mensaje VARCHAR2(500)
 );
@@ -430,7 +430,7 @@ BEGIN
     end if;
 
     if deleting then -- En caso de borrado
-            v_mensaje := v_mensaje || 'OPERACIÓN: BORRADO || ' || 'ID: ' || :old.identificador || ', TÍTULO: ' || :old.titulo || ', FECHA LANZAMIENTO: ' || :old.fechalanzamiento || ', DURACIÓN: ' || :old.duracion || ', REPRODUCCIONES: ' || :old.reproducciones || ', ID DISCO: ' || :old.identificadordisco;
+            v_mensaje := v_mensaje || 'OPERACIÓN: INSERCIÓN || ' || 'ID: ' || :old.identificador || ', TÍTULO: ' || :old.titulo || ', FECHA LANZAMIENTO: ' || :old.fechalanzamiento || ', DURACIÓN: ' || :old.duracion || ', REPRODUCCIONES: ' || :old.reproducciones || ', ID DISCO: ' || :old.identificadordisco;
     end if;
 
     if updating('titulo') then -- En caso de actualizar el título
@@ -449,15 +449,9 @@ BEGIN
         v_mensaje := v_mensaje || 'OPERACIÓN: MODIFICACIÓN || ' || 'REPRODUCCIONES ANTERIORES: ' || :old.reproducciones || ', REPRODUCCIONES NUEVAS: ' || :new.reproducciones;
     end if;
     
-    if updating('identificadordisco') then -- En caso de actualizar el identificador del disco
-        v_mensaje := v_mensaje || 'OPERACIÓN: MODIFICACIÓN || ' || 'DISCO ANTERIOR: ' || :old.identificadordisco || ', DISCO NUEVO: ' || :new.identificadordisco;
-    end if;
-    
-    insert into audita_canciones values(v_mensaje); -- Realizar la inserción del mensaje a la nueva tabla
+    insert into audita_personas values(v_mensaje); -- Realizar la inserción del mensaje a la nueva tabla
 END;
 /
-
-
 
 
 
