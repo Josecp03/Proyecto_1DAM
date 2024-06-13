@@ -504,6 +504,8 @@ END;
 /
 
 -- PROCEDIMIENTO PARA REALIZAR UN LISTADO DE LOS ARTISTAS QUE TIENE UN REPRESENTANTE Y LAS CANCIONES DE ESTOS
+-- SET VERIFY OFF;
+-- SET SERVEROUTPUT ON;
 CREATE OR REPLACE PROCEDURE MOSTRAR_CANCIONES_DISCOS (p_identificador_representante artistas.identificadorrepresentante%type)
 IS
     v_nombre_representante personas.nombre%type; -- Variable para el nombre del representante
@@ -514,9 +516,11 @@ IS
 
     -- Cursor para guardar la información de los artistas
     cursor cursor_artistas is
-        select *
-        from artistas
-        where identificadorrepresentante = p_identificador_representante;
+        select a.identificador, p.nombre, p.apellidos, p.fechanacimiento, p.fechainicio, 
+               a.nombreartistico, a.pais, a.ciudad, a.oyentes, a.estado
+        from artistas a
+        join personas p on a.identificador = p.identificador
+        where a.identificadorrepresentante = p_identificador_representante;
     
     -- Cursor para guardar la información de las canciones
     cursor cursor_canciones(p_identificador_artista artistas.identificador%type) is
@@ -564,10 +568,20 @@ BEGIN
             if cursor_artistas%found then
                 v_contador_artistas := v_contador_artistas + 1;
             end if;
-            dbms_output.put_line('----------------------------------------------------------------------------------------------------');
-            dbms_output.put_line('PROFESOR: ' || v_profesor.nom_profesor || ' ' || v_profesor.ape_profesor);
-            dbms_output.put_line('----------------------------------------------------------------------------------------------------');
-            dbms_output.put_line('      NOMBRE ALUMNO           APELLIDOS ALUMNO            FECHA NACIMIENTO');
+            dbms_output.put_line('==================================================================================================================');
+            dbms_output.put_line('                                                                                              ARTISTA');
+            dbms_output.put_line('==================================================================================================================');
+            dbms_output.put_line('      NOMBRE              APELLIDOS               FECHA NACIMIENTO            NOMBRE ARTISTICO            PAIS            CIUDAD          OYENTES         ESTADO');
+            dbms_output.put_line('      ' || 
+                                         RPAD(v_artista.nombre, 25, ' ') ||
+                                         RPAD(v_artista.apellidos, 30, ' ') ||
+                                         RPAD(v_artista.fechanacimiento, 24, ' ') ||
+                                         RPAD(v_artista.nombreartistico, 30, ' ') ||
+                                         RPAD(v_artista.pais, 24, ' ') ||
+                                         RPAD(v_artista.ciudad, 30, ' ') ||
+                                         RPAD(v_artista.oyentes, 24, ' ') ||
+                                         v_artista.estado
+                                        );
             -- Segundo Cursor
             open cursor_canciones (v_artista.identificador);
                 loop
@@ -578,15 +592,15 @@ BEGIN
                         v_contador_canciones := v_contador_canciones + 1;
                  end if;
                     dbms_output.put_line('      ' || 
-                                         RPAD(v_artista.nombre, 24, ' ') ||
-                                         RPAD(v_artista.apellidos, 30, ' ') ||
+                                         RPAD(v_cancion.titulo, 24, ' ') ||
+                                         RPAD(v_cancion.duracion, 30, ' ') ||
                                          v_artista.oyentes
                                         );
 
                 end loop;
-            close cursor_opositores;
+            close cursor_canciones;
         end loop;
-    close cursor_profesores;
+    close cursor_artistas;
     
     dbms_output.put_line('----------------------------------------------------------------------------------------------------');
     dbms_output.put_line('NÚMERO TOTAL DE ARTISTAS: ' || v_contador_artistas || '                       ' || 'NÚMERO TOTAL DE CANCIONES: ' || v_contador_canciones);
@@ -601,6 +615,12 @@ EXCEPTION
 END;
 /
 
+DECLARE
+    v_representante representantes.identificador%type := '000002PE';
+BEGIN
+    mostrar_canciones_discos(v_representante);
+END;
+/
 
 
 
