@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+  
+    <entry key="DRIVER">jdbc:oracle:thin:</entry>
+	<entry key="SERVIDOR">@localhost</entry>
+	<entry key="PUERTO">1521</entry>
+	<entry key="SID">XE</entry>
+    <entry key="USUARIO">gimnasio</entry>
+    <entry key="CLAVE">gimnasio</entry>
+</properties>
